@@ -179,4 +179,3 @@ document.addEventListener('keydown', function (event) {
         this.location.reload();
     }
 });
-//https://www.loom.com/share/50c9d39bae724441aa0b94e0d244f037
