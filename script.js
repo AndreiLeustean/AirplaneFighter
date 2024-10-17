@@ -1,16 +1,18 @@
 let score = 0;
 let safety = 0;
 let gameActive = false;
+const oneSecond = 1000;
+const hightOfGame = 585;
+const timeOfVerification = 50;
+const speedOfPlane = 10;
 
 function updateScore() {
     setInterval(function () {
-        if (gameActive) {
-            if (!gameOver()) {
-                ++score;
-                document.getElementById("scoreTable").innerHTML = "Score : " + score;
-            }
+        if (gameActive && !gameOver()) {
+            ++score;
+            document.getElementById("scoreTable").innerHTML = "Score : " + score;
         }
-    }, 1000);
+    }, oneSecond);
 }
 
 function spawnEnemy() {
@@ -46,12 +48,11 @@ function changeDirectionEnemy(enemy, direction) {
     let speed = 5;
     if (gameOver()) {
         speed = 0;
-    } else {
-        if (score % 10 === 0) {
-            ++speed;
-        }
-        directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop);
     }
+    if (score % 10 === 0) {
+        ++speed;
+    }
+    directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop);
 }
 
 function enemyPossibleMoves(enemy) {
@@ -68,15 +69,19 @@ function enemyPossibleMoves(enemy) {
             direction = 0;
         }
         changeDirectionEnemy(enemy, direction);
-        if (enemyTop > 585) {
+        if (enemyTop > hightOfGame) {
             clearInterval(enemyInterval);
             enemy.remove();
         }
         warningSpeed();
-    }, 50);
+    }, timeOfVerification);
 }
-
-function airplaneHit() {
+function isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
+    rightPositionEnemy, leftPositionPlane) {
+    return downPositionEnemy >= topPositionPlane && leftPositionEnemy < rightPositionPlane &&
+        rightPositionEnemy > leftPositionPlane;
+}
+function collision() {
     setInterval(function () {
         const airplane = document.getElementById('airPlane');
         const enemies = document.getElementsByClassName('enemy');
@@ -84,27 +89,23 @@ function airplaneHit() {
         let leftPositionPlane = airplane.offsetLeft;
         let rightPositionPlane = leftPositionPlane + airplane.offsetWidth;
 
-        for (let i = 0; i < enemies.length; i++) {
+        for (let i = 0; i < enemies.length; ++i) {
             let enemy = enemies[i];
             let downPositionEnemy = enemy.offsetTop + enemy.offsetHeight;
             let leftPositionEnemy = enemy.offsetLeft;
             let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
 
-            if (downPositionEnemy >= topPositionPlane &&
-                leftPositionEnemy < rightPositionPlane &&
-                rightPositionEnemy > leftPositionPlane) {
+            if (isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
+                rightPositionEnemy, leftPositionPlane)) {
                 messageGameOver();
             }
         }
-    }, 50);
+    }, timeOfVerification);
 }
 
 function gameOver() {
     let gameOverMess = document.getElementById('gameOverMess');
-    if (window.getComputedStyle(gameOverMess).visibility === 'visible') {
-        return true;
-    }
-    return false;
+    return window.getComputedStyle(gameOverMess).visibility === 'visible';
 }
 
 function messageGameOver() {
@@ -115,7 +116,7 @@ function messageGameOver() {
 
 function warningSpeed() {
     let warningSpeed = document.getElementById('increaseSpeedMess');
-    if ((score % 10 === 0) && score > 9) {
+    if (score % 10 === 0 && score > 9) {
         warningSpeed.style.visibility = 'visible';
     } else {
         warningSpeed.style.visibility = 'hidden';
@@ -123,12 +124,12 @@ function warningSpeed() {
 }
 
 function startEnemyGeneration() {
-    let intervalBetweenEnemies = 3000;
+    let intervalBetweenEnemies = oneSecond * 3;
     setInterval(function () {
-        if (gameActive && (gameOver() === false)) {
+        if (gameActive && gameOver() === false) {
             spawnEnemy();
-            if (score % 2 === 0 && score < 60) {
-                intervalBetweenEnemies = Math.max(500, 3000 - score * 50);
+            if (score % 4 === 0) {
+                intervalBetweenEnemies = Math.max(500, intervalBetweenEnemies - score * 50);
             }
         }
     }, intervalBetweenEnemies);
@@ -139,20 +140,57 @@ function hideStartMessage() {
 }
 
 function moveAirplane(direction) {
-    const airplane = document.getElementById('airPlane');
-    const airplaneWidth = airplane.offsetWidth;
-    const gameWidth = document.getElementById('airplaneGame').offsetWidth;
-    let leftPosition = airplane.offsetLeft;
-    if ((direction === "right") && (gameOver() === false)) {
-        if (leftPosition + airplaneWidth < gameWidth) {
-            airplane.style.left = (leftPosition + 10) + 'px';
-        }
-    } else if ((direction === "left") && (gameOver() === false)) {
-        if (leftPosition > 0) {
-            airplane.style.left = (leftPosition - 10) + 'px';
+    if (gameOver() === false) {
+        const airplane = document.getElementById('airPlane');
+        const airplaneWidth = airplane.offsetWidth;
+        const gameWidth = document.getElementById('airplaneGame').offsetWidth;
+        let leftPosition = airplane.offsetLeft;
+        if (direction === "right") {
+            if (leftPosition + airplaneWidth < gameWidth) {
+                airplane.style.left = (leftPosition + speedOfPlane) + 'px';
+            }
+        } else if (direction === "left") {
+            if (leftPosition > 0) {
+                airplane.style.left = (leftPosition - speedOfPlane) + 'px';
+            }
         }
     }
+
 }
+
+// function spawnProjectiles() {
+//     let projectil = document.createElement('div');
+//     projectil.classList.add('projectile');
+//     const airplane = document.getElementById('airPlane');
+//     const airplanePosition = airplane.getBoundingClientRect();
+
+//     projectil.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - 10) + 'px';
+//     projectil.style.bottom = (airplane.offsetHeight + 10) + 'px';
+//     const gameContainer = document.getElementById('airplaneGame');
+//     gameContainer.appendChild(projectil);
+//     projectilesMovement(projectil, gameContainer);
+//     projectilesMovement(projectil, gameContainer);
+
+// }
+
+// function projectilesMovement(projectil, gameContainer) {
+//     let speed = 3;
+//     let projectileInterval = setInterval(function () {
+//         const currentBottom = parseInt(projectil.style.bottom);
+//         if (currentBottom >= gameContainer.offsetHeight) {
+//             clearInterval(projectileInterval);
+//             projectil.remove();
+//         } else {
+//             projectil.style.bottom = (currentBottom + speed) + 'px';
+//         }
+//     }, 50);
+// }
+
+document.addEventListener('click', function (event) {
+    if (gameOver() === false) {
+        spawnProjectiles();
+    }
+});
 
 document.addEventListener('keydown', function (event) {
     if (event.key === "ArrowRight") {
@@ -166,7 +204,7 @@ document.addEventListener('keydown', function (event) {
     if (event.key === "r" && safety === 0) {
         hideStartMessage();
         updateScore();
-        airplaneHit();
+        collision();
         startEnemyGeneration();
         gameActive = true;
         ++safety;
@@ -175,7 +213,9 @@ document.addEventListener('keydown', function (event) {
 
 document.addEventListener('keydown', function (event) {
     const gameOverMess = document.getElementById('gameOverMess');
-    if (event.key === 'r' && gameOverMess.style.visibility === 'visible') {
+    if (event.key === 'r' && gameOver()) {
         this.location.reload();
     }
 });
+
+
