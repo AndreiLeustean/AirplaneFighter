@@ -9,10 +9,9 @@ const speedOfPlane = 10;
 function updateScore() {
     setInterval(function () {
         if (gameActive && !gameOver()) {
-            ++score;
             document.getElementById("scoreTable").innerHTML = "Score : " + score;
         }
-    }, oneSecond);
+    }, timeOfVerification);
 }
 
 function spawnEnemy() {
@@ -158,33 +157,65 @@ function moveAirplane(direction) {
 
 }
 
-// function spawnProjectiles() {
-//     let projectil = document.createElement('div');
-//     projectil.classList.add('projectile');
-//     const airplane = document.getElementById('airPlane');
-//     const airplanePosition = airplane.getBoundingClientRect();
+function spawnProjectiles() {
+    let projectil = document.createElement('div');
+    projectil.classList.add('projectile');
+    const airplane = document.getElementById('airPlane');
+    const airplanePosition = airplane.getBoundingClientRect();
 
-//     projectil.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - 10) + 'px';
-//     projectil.style.bottom = (airplane.offsetHeight + 10) + 'px';
-//     const gameContainer = document.getElementById('airplaneGame');
-//     gameContainer.appendChild(projectil);
-//     projectilesMovement(projectil, gameContainer);
-//     projectilesMovement(projectil, gameContainer);
+    projectil.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - 10) + 'px';
+    projectil.style.bottom = (airplane.offsetHeight + 10) + 'px';
+    const gameContainer = document.getElementById('airplaneGame');
+    gameContainer.appendChild(projectil);
+    projectilesMovement(projectil, gameContainer);
+    enemyHit();
+}
 
-// }
+function projectilesMovement(projectil, gameContainer) {
+    let speed = 5;
+    let projectileInterval = setInterval(function () {
+        const currentBottom = parseInt(projectil.style.bottom);
+        if (gameOver() === true) {
+            clearInterval(projectileInterval);
+            return;
+        }
+        if (currentBottom >= gameContainer.offsetHeight) {
+            clearInterval(projectileInterval);
+            projectil.remove();
+        } else {
+            projectil.style.bottom = (currentBottom + speed) + 'px';
+        }
+    }, 50);
+}
 
-// function projectilesMovement(projectil, gameContainer) {
-//     let speed = 3;
-//     let projectileInterval = setInterval(function () {
-//         const currentBottom = parseInt(projectil.style.bottom);
-//         if (currentBottom >= gameContainer.offsetHeight) {
-//             clearInterval(projectileInterval);
-//             projectil.remove();
-//         } else {
-//             projectil.style.bottom = (currentBottom + speed) + 'px';
-//         }
-//     }, 50);
-// }
+function enemyHit() {
+    const enemies = document.getElementsByClassName('enemy');
+    const projectils = document.getElementsByClassName('projectile');
+
+    setInterval(function () {
+        for (let i = 0; i < projectils.length; ++i) {
+            let projectil = projectils[i];
+            let topPositionProjectil = projectil.offsetTop;
+            let leftPositionProjectil = projectil.offsetLeft;
+            let rightPositionProjectil = leftPositionProjectil + projectil.offsetWidth;
+
+            for (let j = 0; j < enemies.length; ++j) {
+                let enemy = enemies[j];
+                let downPositionEnemy = enemy.offsetTop + enemy.offsetHeight;
+                let leftPositionEnemy = enemy.offsetLeft;
+                let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
+
+                if (isColliding(downPositionEnemy, topPositionProjectil, leftPositionEnemy, rightPositionProjectil,
+                    rightPositionEnemy, leftPositionProjectil)) {
+                    enemy.remove();
+                    projectil.remove();
+                    ++score
+                    break;
+                }
+            }
+        }
+    }, 50);
+}
 
 document.addEventListener('click', function (event) {
     if (gameOver() === false) {
@@ -198,9 +229,7 @@ document.addEventListener('keydown', function (event) {
     } else if (event.key === "ArrowLeft") {
         moveAirplane("left");
     }
-});
 
-document.addEventListener('keydown', function (event) {
     if (event.key === "r" && safety === 0) {
         hideStartMessage();
         updateScore();
@@ -209,13 +238,8 @@ document.addEventListener('keydown', function (event) {
         gameActive = true;
         ++safety;
     }
-});
 
-document.addEventListener('keydown', function (event) {
-    const gameOverMess = document.getElementById('gameOverMess');
     if (event.key === 'r' && gameOver()) {
         this.location.reload();
     }
 });
-
-
