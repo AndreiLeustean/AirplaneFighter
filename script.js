@@ -223,7 +223,7 @@ function enemyHit() {//
 }
 
 document.addEventListener('click', function (event) {
-    if (gameOver() === false) {
+    if (gameOver() === false && gameActive === true) {
         spawnProjectiles();
     }
 });
