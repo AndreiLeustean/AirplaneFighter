@@ -3,18 +3,23 @@ let safety = 0;
 let gameActive = false;
 const oneSecond = 1000;
 const hightOfGame = 585;
-const timeOfVerification = 50;
+const timeOfVerification = 10;
 const speedOfPlane = 10;
 
 function updateScore() {
-    setInterval(function () {
-        if (gameActive && !gameOver()) {
-            document.getElementById("scoreTable").innerHTML = "Score : " + score;
-        }
-    }, timeOfVerification);
+    if (gameActive && !gameOver()) {
+        document.getElementById("scoreTable").innerHTML = "Score : " + score;
+    }
 }
 
-function spawnEnemy() {
+function onUpdateFrame() {
+    setInterval(function () {
+        updateScore();
+        collision();
+    }, timeOfVerification)
+}
+
+function spawnEnemy(speed) {
     const enemy = document.createElement('div');
     enemy.classList.add('enemy');
     const gameWidth = document.getElementById('airplaneGame').offsetWidth;
@@ -22,7 +27,7 @@ function spawnEnemy() {
     enemy.style.left = randomPosition + 'px';
     enemy.style.top = '0px';
     document.getElementById('airplaneGame').appendChild(enemy);
-    enemyPossibleMoves(enemy);
+    enemyPossibleMoves(enemy, speed);
 }
 
 function getRandomInt(max) {
@@ -41,20 +46,16 @@ function directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop) {
     }
 }
 
-function changeDirectionEnemy(enemy, direction) {
+function changeDirectionEnemy(enemy, direction, speed) {
     let enemyTop = enemy.offsetTop;
     let enemyLeft = enemy.offsetLeft;
-    let speed = 5;
     if (gameOver()) {
         speed = 0;
-    }
-    if (score % 10 === 0) {
-        ++speed;
     }
     directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop);
 }
 
-function enemyPossibleMoves(enemy) {
+function enemyPossibleMoves(enemy, speed) {
     let direction = getRandomInt(3);
     let enemyInterval = setInterval(function () {
         const gameWidth = document.getElementById('airplaneGame').offsetWidth;
@@ -67,7 +68,7 @@ function enemyPossibleMoves(enemy) {
         } else if (enemyLeft <= 0) {
             direction = 0;
         }
-        changeDirectionEnemy(enemy, direction);
+        changeDirectionEnemy(enemy, direction, speed);
         if (enemyTop > hightOfGame) {
             clearInterval(enemyInterval);
             enemy.remove();
@@ -75,31 +76,31 @@ function enemyPossibleMoves(enemy) {
         warningSpeed();
     }, timeOfVerification);
 }
+
 function isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
     rightPositionEnemy, leftPositionPlane) {
     return downPositionEnemy >= topPositionPlane && leftPositionEnemy < rightPositionPlane &&
         rightPositionEnemy > leftPositionPlane;
 }
+
 function collision() {
-    setInterval(function () {
-        const airplane = document.getElementById('airPlane');
-        const enemies = document.getElementsByClassName('enemy');
-        let topPositionPlane = airplane.offsetTop;
-        let leftPositionPlane = airplane.offsetLeft;
-        let rightPositionPlane = leftPositionPlane + airplane.offsetWidth;
+    const airplane = document.getElementById('airPlane');
+    const enemies = document.getElementsByClassName('enemy');
+    let topPositionPlane = airplane.offsetTop;
+    let leftPositionPlane = airplane.offsetLeft;
+    let rightPositionPlane = leftPositionPlane + airplane.offsetWidth;
 
-        for (let i = 0; i < enemies.length; ++i) {
-            let enemy = enemies[i];
-            let downPositionEnemy = enemy.offsetTop + enemy.offsetHeight;
-            let leftPositionEnemy = enemy.offsetLeft;
-            let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
+    for (let i = 0; i < enemies.length; ++i) {
+        let enemy = enemies[i];
+        let downPositionEnemy = enemy.offsetTop + enemy.offsetHeight;
+        let leftPositionEnemy = enemy.offsetLeft;
+        let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
 
-            if (isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
-                rightPositionEnemy, leftPositionPlane)) {
-                messageGameOver();
-            }
+        if (isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
+            rightPositionEnemy, leftPositionPlane)) {
+            messageGameOver();
         }
-    }, timeOfVerification);
+    }
 }
 
 function gameOver() {
@@ -124,11 +125,15 @@ function warningSpeed() {
 
 function startEnemyGeneration() {
     let intervalBetweenEnemies = oneSecond * 3;
+    let speed = 1;
     setInterval(function () {
         if (gameActive && gameOver() === false) {
-            spawnEnemy();
-            if (score % 4 === 0) {
+            spawnEnemy(speed);
+            if (score % 4 === 0 && score > 1) {
                 intervalBetweenEnemies = Math.max(500, intervalBetweenEnemies - score * 50);
+            }
+            if (score % 10 === 0 && score > 9) {
+                speed += 0.25;
             }
         }
     }, intervalBetweenEnemies);
@@ -171,8 +176,8 @@ function spawnProjectiles() {
     enemyHit();
 }
 
-function projectilesMovement(projectil, gameContainer) {
-    let speed = 5;
+function projectilesMovement(projectil, gameContainer) {//
+    let speed = 1;
     let projectileInterval = setInterval(function () {
         const currentBottom = parseInt(projectil.style.bottom);
         if (gameOver() === true) {
@@ -185,10 +190,10 @@ function projectilesMovement(projectil, gameContainer) {
         } else {
             projectil.style.bottom = (currentBottom + speed) + 'px';
         }
-    }, 50);
+    }, timeOfVerification);
 }
 
-function enemyHit() {
+function enemyHit() {//
     const enemies = document.getElementsByClassName('enemy');
     const projectils = document.getElementsByClassName('projectile');
 
@@ -214,7 +219,7 @@ function enemyHit() {
                 }
             }
         }
-    }, 50);
+    }, timeOfVerification);
 }
 
 document.addEventListener('click', function (event) {
@@ -232,8 +237,7 @@ document.addEventListener('keydown', function (event) {
 
     if (event.key === "r" && safety === 0) {
         hideStartMessage();
-        updateScore();
-        collision();
+        onUpdateFrame();
         startEnemyGeneration();
         gameActive = true;
         ++safety;
