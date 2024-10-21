@@ -15,7 +15,7 @@ function updateScore() {
 function onUpdateFrame() {
     setInterval(function () {
         updateScore();
-        collision();
+        checkCollision();
     }, timeOfVerification)
 }
 
@@ -27,7 +27,7 @@ function spawnEnemy(speed) {
     enemy.style.left = randomPosition + 'px';
     enemy.style.top = '0px';
     document.getElementById('airplaneGame').appendChild(enemy);
-    enemyPossibleMoves(enemy, speed);
+    handleEnemyLogic(enemy, speed);
 }
 
 function getRandomInt(max) {
@@ -55,7 +55,16 @@ function changeDirectionEnemy(enemy, direction, speed) {
     directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop);
 }
 
-function enemyPossibleMoves(enemy, speed) {
+function ifEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction) {
+    if (enemyLeft + enemyWidth >= gameWidth) {
+        direction = 1;
+    } else if (enemyLeft <= 0) {
+        direction = 0;
+    }
+    return direction;
+}
+
+function handleEnemyLogic(enemy, speed) {
     let direction = getRandomInt(3);
     let enemyInterval = setInterval(function () {
         const gameWidth = document.getElementById('airplaneGame').offsetWidth;
@@ -63,16 +72,14 @@ function enemyPossibleMoves(enemy, speed) {
         let enemyTop = enemy.offsetTop;
         let enemyLeft = enemy.offsetLeft;
 
-        if (enemyLeft + enemyWidth >= gameWidth) {
-            direction = 1;
-        } else if (enemyLeft <= 0) {
-            direction = 0;
-        }
+        direction = ifEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction);
         changeDirectionEnemy(enemy, direction, speed);
+
         if (enemyTop > hightOfGame) {
             clearInterval(enemyInterval);
             enemy.remove();
         }
+
         warningSpeed();
     }, timeOfVerification);
 }
@@ -83,7 +90,7 @@ function isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rig
         rightPositionEnemy > leftPositionPlane;
 }
 
-function collision() {
+function checkCollision() {
     const airplane = document.getElementById('airPlane');
     const enemies = document.getElementsByClassName('enemy');
     let topPositionPlane = airplane.offsetTop;
