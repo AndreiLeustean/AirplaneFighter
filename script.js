@@ -2,7 +2,7 @@ let score = 0;
 let safety = 0;
 let gameActive = false;
 const oneSecond = 1000;
-const hightOfGame = 585;
+const heightOfGame = 585;
 const timeOfVerification = 10;
 const speedOfPlane = 10;
 
@@ -12,11 +12,31 @@ function updateScore() {
     }
 }
 
+
 function onUpdateFrame() {
     setInterval(function () {
         updateScore();
         checkCollision();
+        if (gameOver()) {
+            clearInterval(frameInterval);
+        }
     }, timeOfVerification)
+}
+
+function handleEnemyLogic() {
+    let enemySpawnInterval = oneSecond * 3;
+    let speed = 1;
+    setInterval(function () {
+        if (gameActive && gameOver() === false) {
+            spawnEnemy(speed);
+            if (score % 4 === 0 && score > 1) {
+                enemySpawnInterval = Math.max(500, enemySpawnInterval - score * 50);
+            }
+            if (score % 10 === 0 && score > 9) {
+                speed += 0.25;
+            }
+        }
+    }, enemySpawnInterval);
 }
 
 function spawnEnemy(speed) {
@@ -27,7 +47,7 @@ function spawnEnemy(speed) {
     enemy.style.left = randomPosition + 'px';
     enemy.style.top = '0px';
     document.getElementById('airplaneGame').appendChild(enemy);
-    handleEnemyLogic(enemy, speed);
+    updateEnemyPosition(enemy, speed);
 }
 
 function getRandomInt(max) {
@@ -55,7 +75,7 @@ function changeDirectionEnemy(enemy, direction, speed) {
     directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop);
 }
 
-function ifEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction) {
+function checkIfEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction) {
     if (enemyLeft + enemyWidth >= gameWidth) {
         direction = 1;
     } else if (enemyLeft <= 0) {
@@ -64,7 +84,7 @@ function ifEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction) {
     return direction;
 }
 
-function handleEnemyLogic(enemy, speed) {
+function updateEnemyPosition(enemy, speed) {
     let direction = getRandomInt(3);
     let enemyInterval = setInterval(function () {
         const gameWidth = document.getElementById('airplaneGame').offsetWidth;
@@ -72,15 +92,15 @@ function handleEnemyLogic(enemy, speed) {
         let enemyTop = enemy.offsetTop;
         let enemyLeft = enemy.offsetLeft;
 
-        direction = ifEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction);
+        direction = checkIfEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction);
         changeDirectionEnemy(enemy, direction, speed);
 
-        if (enemyTop > hightOfGame) {
+        if (enemyTop > heightOfGame) {
             clearInterval(enemyInterval);
             enemy.remove();
         }
 
-        warningSpeed();
+        showSpeedWarning();
     }, timeOfVerification);
 }
 
@@ -121,29 +141,13 @@ function messageGameOver() {
     gameOverMess.style.visibility = 'visible';
 }
 
-function warningSpeed() {
-    let warningSpeed = document.getElementById('increaseSpeedMess');
+function showSpeedWarning() {
+    let showSpeedWarning = document.getElementById('increaseSpeedMess');
     if (score % 10 === 0 && score > 9) {
-        warningSpeed.style.visibility = 'visible';
+        showSpeedWarning.style.visibility = 'visible';
     } else {
-        warningSpeed.style.visibility = 'hidden';
+        showSpeedWarning.style.visibility = 'hidden';
     }
-}
-
-function startEnemyGeneration() {
-    let intervalBetweenEnemies = oneSecond * 3;
-    let speed = 1;
-    setInterval(function () {
-        if (gameActive && gameOver() === false) {
-            spawnEnemy(speed);
-            if (score % 4 === 0 && score > 1) {
-                intervalBetweenEnemies = Math.max(500, intervalBetweenEnemies - score * 50);
-            }
-            if (score % 10 === 0 && score > 9) {
-                speed += 0.25;
-            }
-        }
-    }, intervalBetweenEnemies);
 }
 
 function hideStartMessage() {
@@ -179,11 +183,11 @@ function spawnProjectiles() {
     projectil.style.bottom = (airplane.offsetHeight + 10) + 'px';
     const gameContainer = document.getElementById('airplaneGame');
     gameContainer.appendChild(projectil);
-    projectilesMovement(projectil, gameContainer);
-    enemyHit();
+    projectilMovement(projectil, gameContainer);
+    hitEnemy();
 }
 
-function projectilesMovement(projectil, gameContainer) {//
+function projectilMovement(projectil, gameContainer) {
     let speed = 1;
     let projectileInterval = setInterval(function () {
         const currentBottom = parseInt(projectil.style.bottom);
@@ -200,7 +204,7 @@ function projectilesMovement(projectil, gameContainer) {//
     }, timeOfVerification);
 }
 
-function enemyHit() {//
+function hitEnemy() {
     const enemies = document.getElementsByClassName('enemy');
     const projectils = document.getElementsByClassName('projectile');
 
@@ -245,7 +249,7 @@ document.addEventListener('keydown', function (event) {
     if (event.key === "r" && safety === 0) {
         hideStartMessage();
         onUpdateFrame();
-        startEnemyGeneration();
+        handleEnemyLogic();
         gameActive = true;
         ++safety;
     }
@@ -254,3 +258,4 @@ document.addEventListener('keydown', function (event) {
         this.location.reload();
     }
 });
+
