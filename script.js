@@ -5,6 +5,14 @@ const oneSecond = 1000;
 const heightOfGame = 585;
 const timeOfVerification = 10;
 const speedOfPlane = 10;
+const MIN_SPAWN_INTERVAL = 500;
+const SCORE_REDUCTION_FACTOR = 50;
+const SPEED_INCREMENT = 0.25;
+const TOTAL_DIRECTIONS = 3;
+const DIRECTION_DOWN_RIGHT = 0;
+const DIRECTION_DOWN_LEFT = 1;
+const DIRECTION_DOWN = 2;
+const TEN = 10;
 
 function updateScore() {
     if (gameActive && !gameOver()) {
@@ -12,9 +20,8 @@ function updateScore() {
     }
 }
 
-
 function onUpdateFrame() {
-    setInterval(function () {
+    frameInterval = setInterval(function () {
         updateScore();
         checkCollision();
         if (gameOver()) {
@@ -30,10 +37,10 @@ function handleEnemyLogic() {
         if (gameActive && gameOver() === false) {
             spawnEnemy(speed);
             if (score % 4 === 0 && score > 1) {
-                enemySpawnInterval = Math.max(500, enemySpawnInterval - score * 50);
+                enemySpawnInterval = Math.max(MIN_SPAWN_INTERVAL, enemySpawnInterval - score * SCORE_REDUCTION_FACTOR);
             }
-            if (score % 10 === 0 && score > 9) {
-                speed += 0.25;
+            if (score % TEN === 0 && score > 9) {
+                speed += SPEED_INCREMENT;
             }
         }
     }, enemySpawnInterval);
@@ -55,13 +62,13 @@ function getRandomInt(max) {
 }
 
 function directionsOfEnemy(enemy, direction, speed, enemyLeft, enemyTop) {
-    if (direction === 0) {
+    if (direction === DIRECTION_DOWN_RIGHT) {
         enemy.style.top = (enemyTop + speed) + 'px';
         enemy.style.left = (enemyLeft + speed) + 'px';
-    } else if (direction === 1) {
+    } else if (direction === DIRECTION_DOWN_LEFT) {
         enemy.style.top = (enemyTop + speed) + 'px';
         enemy.style.left = (enemyLeft - speed) + 'px';
-    } else if (direction === 2) {
+    } else if (direction === DIRECTION_DOWN) {
         enemy.style.top = (enemyTop + speed) + 'px';
     }
 }
@@ -77,15 +84,15 @@ function changeDirectionEnemy(enemy, direction, speed) {
 
 function checkIfEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction) {
     if (enemyLeft + enemyWidth >= gameWidth) {
-        direction = 1;
+        direction = DIRECTION_DOWN_LEFT;
     } else if (enemyLeft <= 0) {
-        direction = 0;
+        direction = DIRECTION_DOWN_RIGHT;
     }
     return direction;
 }
 
 function updateEnemyPosition(enemy, speed) {
-    let direction = getRandomInt(3);
+    let direction = getRandomInt(TOTAL_DIRECTIONS);
     let enemyInterval = setInterval(function () {
         const gameWidth = document.getElementById('airplaneGame').offsetWidth;
         const enemyWidth = enemy.offsetWidth;
@@ -143,7 +150,7 @@ function messageGameOver() {
 
 function showSpeedWarning() {
     let showSpeedWarning = document.getElementById('increaseSpeedMess');
-    if (score % 10 === 0 && score > 9) {
+    if (score % TEN === 0 && score > 9) {
         showSpeedWarning.style.visibility = 'visible';
     } else {
         showSpeedWarning.style.visibility = 'hidden';
@@ -174,46 +181,46 @@ function moveAirplane(direction) {
 }
 
 function spawnProjectiles() {
-    let projectil = document.createElement('div');
-    projectil.classList.add('projectile');
+    let projectile = document.createElement('div');
+    projectile.classList.add('projectile');
     const airplane = document.getElementById('airPlane');
     const airplanePosition = airplane.getBoundingClientRect();
 
-    projectil.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - 10) + 'px';
-    projectil.style.bottom = (airplane.offsetHeight + 10) + 'px';
+    projectile.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - TEN) + 'px';
+    projectile.style.bottom = (airplane.offsetHeight + TEN) + 'px';
     const gameContainer = document.getElementById('airplaneGame');
-    gameContainer.appendChild(projectil);
-    projectilMovement(projectil, gameContainer);
+    gameContainer.appendChild(projectile);
+    projectileMovement(projectile, gameContainer);
     hitEnemy();
 }
 
-function projectilMovement(projectil, gameContainer) {
+function projectileMovement(projectile, gameContainer) {
     let speed = 1;
     let projectileInterval = setInterval(function () {
-        const currentBottom = parseInt(projectil.style.bottom);
+        const currentBottom = parseInt(projectile.style.bottom);
         if (gameOver() === true) {
             clearInterval(projectileInterval);
             return;
         }
         if (currentBottom >= gameContainer.offsetHeight) {
             clearInterval(projectileInterval);
-            projectil.remove();
+            projectile.remove();
         } else {
-            projectil.style.bottom = (currentBottom + speed) + 'px';
+            projectile.style.bottom = (currentBottom + speed) + 'px';
         }
     }, timeOfVerification);
 }
 
 function hitEnemy() {
     const enemies = document.getElementsByClassName('enemy');
-    const projectils = document.getElementsByClassName('projectile');
+    const projectiles = document.getElementsByClassName('projectile');
 
     setInterval(function () {
-        for (let i = 0; i < projectils.length; ++i) {
-            let projectil = projectils[i];
-            let topPositionProjectil = projectil.offsetTop;
-            let leftPositionProjectil = projectil.offsetLeft;
-            let rightPositionProjectil = leftPositionProjectil + projectil.offsetWidth;
+        for (let i = 0; i < projectiles.length; ++i) {
+            let projectile = projectiles[i];
+            let topPositionProjectile = projectile.offsetTop;
+            let leftPositionProjectile = projectile.offsetLeft;
+            let rightPositionProjectile = leftPositionProjectile + projectile.offsetWidth;
 
             for (let j = 0; j < enemies.length; ++j) {
                 let enemy = enemies[j];
@@ -221,10 +228,10 @@ function hitEnemy() {
                 let leftPositionEnemy = enemy.offsetLeft;
                 let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
 
-                if (isColliding(downPositionEnemy, topPositionProjectil, leftPositionEnemy, rightPositionProjectil,
-                    rightPositionEnemy, leftPositionProjectil)) {
+                if (isColliding(downPositionEnemy, topPositionProjectile, leftPositionEnemy, rightPositionProjectile,
+                    rightPositionEnemy, leftPositionProjectile)) {
                     enemy.remove();
-                    projectil.remove();
+                    projectile.remove();
                     ++score
                     break;
                 }
@@ -258,4 +265,5 @@ document.addEventListener('keydown', function (event) {
         this.location.reload();
     }
 });
+
 
