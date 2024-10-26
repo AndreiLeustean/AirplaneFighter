@@ -1,6 +1,3 @@
-let score = 0;
-let safety = 0;
-let gameActive = false;
 const oneSecond = 1000;
 const heightOfGame = 585;
 const timeOfVerification = 10;
@@ -13,10 +10,14 @@ const DIRECTION_DOWN_RIGHT = 0;
 const DIRECTION_DOWN_LEFT = 1;
 const DIRECTION_DOWN = 2;
 const TEN = 10;
+let score = 0;
+let safety = 0;
+let gameActive = false;
 
 function updateScore() {
     if (gameActive && !gameOver()) {
-        document.getElementById("scoreTable").innerHTML = "Score : " + score;
+        document.getElementById("scoreTable").innerHTML
+            = "Score : " + score;
     }
 }
 
@@ -37,7 +38,8 @@ function handleEnemyLogic() {
         if (gameActive && gameOver() === false) {
             spawnEnemy(speed);
             if (score % 4 === 0 && score > 1) {
-                enemySpawnInterval = Math.max(MIN_SPAWN_INTERVAL, enemySpawnInterval - score * SCORE_REDUCTION_FACTOR);
+                enemySpawnInterval = Math.max(MIN_SPAWN_INTERVAL,
+                    enemySpawnInterval - score * SCORE_REDUCTION_FACTOR);
             }
             if (score % TEN === 0 && score > 9) {
                 speed += SPEED_INCREMENT;
@@ -99,7 +101,8 @@ function updateEnemyPosition(enemy, speed) {
         let enemyTop = enemy.offsetTop;
         let enemyLeft = enemy.offsetLeft;
 
-        direction = checkIfEnemyTouchesEdge(enemyLeft, enemyWidth, gameWidth, direction);
+        direction = checkIfEnemyTouchesEdge(enemyLeft, enemyWidth,
+            gameWidth, direction);
         changeDirectionEnemy(enemy, direction, speed);
 
         if (enemyTop > heightOfGame) {
@@ -111,10 +114,10 @@ function updateEnemyPosition(enemy, speed) {
     }, timeOfVerification);
 }
 
-function isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
-    rightPositionEnemy, leftPositionPlane) {
-    return downPositionEnemy >= topPositionPlane && leftPositionEnemy < rightPositionPlane &&
-        rightPositionEnemy > leftPositionPlane;
+function isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy,
+    rightPositionPlane, rightPositionEnemy, leftPositionPlane) {
+    return downPositionEnemy >= topPositionPlane && leftPositionEnemy < rightPositionPlane
+        && rightPositionEnemy > leftPositionPlane;
 }
 
 function checkCollision() {
@@ -130,7 +133,8 @@ function checkCollision() {
         let leftPositionEnemy = enemy.offsetLeft;
         let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
 
-        if (isColliding(downPositionEnemy, topPositionPlane, leftPositionEnemy, rightPositionPlane,
+        if (isColliding(downPositionEnemy, topPositionPlane,
+            leftPositionEnemy, rightPositionPlane,
             rightPositionEnemy, leftPositionPlane)) {
             messageGameOver();
         }
@@ -167,14 +171,10 @@ function moveAirplane(direction) {
         const airplaneWidth = airplane.offsetWidth;
         const gameWidth = document.getElementById('airplaneGame').offsetWidth;
         let leftPosition = airplane.offsetLeft;
-        if (direction === "right") {
-            if (leftPosition + airplaneWidth < gameWidth) {
-                airplane.style.left = (leftPosition + speedOfPlane) + 'px';
-            }
-        } else if (direction === "left") {
-            if (leftPosition > 0) {
-                airplane.style.left = (leftPosition - speedOfPlane) + 'px';
-            }
+        if (direction === "right" && leftPosition + airplaneWidth < gameWidth) {
+            airplane.style.left = (leftPosition + speedOfPlane) + 'px';
+        } else if (direction === "left" && leftPosition > 0) {
+            airplane.style.left = (leftPosition - speedOfPlane) + 'px';
         }
     }
 
@@ -186,7 +186,8 @@ function spawnProjectiles() {
     const airplane = document.getElementById('airPlane');
     const airplanePosition = airplane.getBoundingClientRect();
 
-    projectile.style.left = (airplanePosition.left + airplane.offsetWidth / 2 - TEN) + 'px';
+    projectile.style.left = (airplanePosition.left +
+        airplane.offsetWidth / 2 - TEN) + 'px';
     projectile.style.bottom = (airplane.offsetHeight + TEN) + 'px';
     const gameContainer = document.getElementById('airplaneGame');
     gameContainer.appendChild(projectile);
@@ -220,7 +221,8 @@ function hitEnemy() {
             let projectile = projectiles[i];
             let topPositionProjectile = projectile.offsetTop;
             let leftPositionProjectile = projectile.offsetLeft;
-            let rightPositionProjectile = leftPositionProjectile + projectile.offsetWidth;
+            let rightPositionProjectile = leftPositionProjectile
+                + projectile.offsetWidth;
 
             for (let j = 0; j < enemies.length; ++j) {
                 let enemy = enemies[j];
@@ -228,7 +230,8 @@ function hitEnemy() {
                 let leftPositionEnemy = enemy.offsetLeft;
                 let rightPositionEnemy = leftPositionEnemy + enemy.offsetWidth;
 
-                if (isColliding(downPositionEnemy, topPositionProjectile, leftPositionEnemy, rightPositionProjectile,
+                if (isColliding(downPositionEnemy, topPositionProjectile,
+                    leftPositionEnemy, rightPositionProjectile,
                     rightPositionEnemy, leftPositionProjectile)) {
                     enemy.remove();
                     projectile.remove();
@@ -265,5 +268,3 @@ document.addEventListener('keydown', function (event) {
         this.location.reload();
     }
 });
-
-
